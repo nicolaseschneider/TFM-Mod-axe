@@ -1,0 +1,6 @@
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-L", "dependency=/tmp/tfm2_sdk_link/deps",
+    "--extern", "mod_api=/tmp/tfm2_sdk_link/deps/libmod_api-0a24296d2b45e79d.rlib",
+    "-L", "native=/tmp/tfm2_sdk_link/native",
+]
