@@ -1,0 +1,10 @@
+[package]
+name = "axe_dota"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+# mod-api is injected automatically by the SDK build system — do not add it here.
+[dependencies]

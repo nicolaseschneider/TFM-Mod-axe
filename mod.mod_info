@@ -1,0 +1,13 @@
+{
+  "name": "Axe (Dota 2)",
+  "author": "nicoefschneider",
+  "version": "2.0.0",
+  "description": "Adds Axe from Dota 2 as a native Rust champion. Berserker's Call dashes forward and taunts on landing; Counter Helix procs passively on taking damage; Culling Blade executes and grants bonuses only on a killing blow.",
+  "last_updated": "2026-05-26",
+  "dependencies": [
+    {
+      "mod_id": "base",
+      "version": ">=0.1.0"
+    }
+  ]
+}

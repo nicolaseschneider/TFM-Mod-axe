@@ -1,0 +1,351 @@
+use mod_api::*;
+
+const MOD_ID: &str = "axe_dota";
+
+const CALL_DASH_RANGE: i64 = 42_000;
+const CALL_TAUNT_RADIUS_SQ: i64 = 35_000 * 35_000;
+const HELIX_RADIUS_SQ: i64 = 30_000 * 30_000;
+
+fn init(_ctx: &GameCtx) -> ModRegistration {
+    let mut reg = ModRegistration::new(MOD_ID);
+    reg.add_champion(Axe);
+    reg
+}
+
+declare_mod!(init);
+
+// ─── Champion definition ──────────────────────────────────────────────────────
+
+#[derive(Clone, Debug)]
+struct Axe;
+
+impl ModChampionInfo for Axe {
+    fn id(&self) -> &str { "axe_dota_axe" }
+    fn name(&self) -> &str { "axe_dota_axe" }
+    fn category(&self) -> ChampionCategory { ChampionCategory::Melee }
+    fn tags(&self) -> Vec<ChampionTag> {
+        vec![ChampionTag::AD, ChampionTag::Tank, ChampionTag::Melee, ChampionTag::CC]
+    }
+
+    fn stat(&self) -> EntityStat {
+        EntityStat {
+            attack: 58,
+            magic_power: 10,
+            hp: 950,
+            defence: 45,
+            magic_resistance: 22,
+            move_speed: 1100,
+            hp_regen: 5,
+            stack: 0,
+            crit_chance: 0,
+        }
+    }
+
+    fn growth(&self) -> EntityStat {
+        EntityStat {
+            attack: 5,
+            magic_power: 1,
+            hp: 100,
+            defence: 5,
+            magic_resistance: 3,
+            move_speed: 0,
+            hp_regen: 1,
+            stack: 0,
+            crit_chance: 0,
+        }
+    }
+
+    fn skill_icon(&self, skill_index: usize) -> (String, String) {
+        let sheet = "asset/base/aseprite_resources/UI_aseprite/skill_icon".to_string();
+        let tag = match skill_index {
+            0 => "berserker_0",  // attack
+            1 => "fighter_1",    // Berserker's Call (charge dash)
+            2 => "berserker_2",  // Counter Helix (spin)
+            3 => "executioner_3", // Culling Blade (execute)
+            _ => "berserker_0",
+        };
+        (sheet, tag.to_string())
+    }
+
+    fn attack(&self) -> Box<dyn ModAction> { Box::new(AxeAttack) }
+    fn skill(&self) -> Box<dyn ModAction> { Box::new(BerserkerCall) }
+    fn skill2(&self) -> Box<dyn ModAction> { Box::new(CounterHelixActive) }
+    fn ult(&self) -> Option<Box<dyn ModAction>> { Some(Box::new(CullingBlade)) }
+    fn passive(&self) -> Option<Box<dyn ModPassive>> { Some(Box::new(CounterHelixPassive)) }
+}
+
+// ─── Basic attack ─────────────────────────────────────────────────────────────
+
+#[derive(Clone, Debug)]
+struct AxeAttack;
+
+impl ModAction for AxeAttack {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { "attack" }
+    fn duration(&self) -> usize { 50 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 0 }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 18_000,
+            growth_range: 0,
+            start_timing: 20,
+            casting: CastingType::Targeting,
+            target: CastingTarget::Enemy,
+            attack_type: AttackType::BaseAttack,
+            effect_type: Box::new(AxeAttackEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct AxeAttackEffect;
+
+impl ModEffectType for AxeAttackEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Target { target_id } = input else { return };
+        let dmg = ctx.get_entity(caster_id).map(|e| e.stat().attack).unwrap_or(0);
+        ctx.deal_damage(caster_id, target_id, dmg, 0, AttackType::BaseAttack);
+    }
+
+    fn expected_damage(&self, stat: &EntityStat) -> (usize, usize) {
+        (stat.attack, 0)
+    }
+}
+
+// ─── Berserker's Call (dash + taunt) ─────────────────────────────────────────
+
+#[derive(Clone, Debug)]
+struct BerserkerCall;
+
+impl ModAction for BerserkerCall {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { "skill" }
+    fn duration(&self) -> usize { 70 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 420 }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 42_000,
+            growth_range: 0,
+            start_timing: 10,
+            casting: CastingType::Direction,
+            target: CastingTarget::Enemy,
+            attack_type: AttackType::Skill,
+            effect_type: Box::new(BerserkerCallEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct BerserkerCallEffect;
+
+impl ModEffectType for BerserkerCallEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Dir { dir_x, dir_y } = input else { return };
+
+        let (cx, cy) = match ctx.get_entity(caster_id) {
+            Some(e) => { let p = e.pos(); (p.x, p.y) }
+            None => return,
+        };
+        let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
+
+        // Normalize direction then scale to dash range (cast to f64 for normalization).
+        let fx = dir_x as f64;
+        let fy = dir_y as f64;
+        let len = (fx * fx + fy * fy).sqrt().max(f64::EPSILON);
+        let dash_dx = ((fx / len) * CALL_DASH_RANGE as f64) as i64;
+        let dash_dy = ((fy / len) * CALL_DASH_RANGE as f64) as i64;
+
+        let land_x = cx as i64 + dash_dx;
+        let land_y = cy as i64 + dash_dy;
+
+        ctx.apply_cc(caster_id, CCState::ForceMove {
+            tick: 30,
+            dx: dash_dx,
+            dy: dash_dy,
+            speed: 4_500,
+        });
+
+        let mut targets: Vec<usize> = Vec::new();
+        for i in 0..ctx.entity_count() {
+            if let Some(e) = ctx.entity_at(i) {
+                if e.team() != caster_team {
+                    let p = e.pos();
+                    let edx = p.x as i64 - land_x;
+                    let edy = p.y as i64 - land_y;
+                    if edx * edx + edy * edy <= CALL_TAUNT_RADIUS_SQ {
+                        targets.push(e.id());
+                    }
+                }
+            }
+        }
+        for tid in targets {
+            ctx.apply_cc(tid, CCState::Taunt { tick: 150, target: caster_id });
+        }
+    }
+
+    fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) { (0, 0) }
+}
+
+// ─── Counter Helix ────────────────────────────────────────────────────────────
+
+#[derive(Clone, Debug)]
+struct CounterHelixActive;
+
+impl ModAction for CounterHelixActive {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { "skill2" }
+    fn duration(&self) -> usize { 40 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 150 }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 30_000,
+            growth_range: 0,
+            start_timing: 8,
+            casting: CastingType::None,
+            target: CastingTarget::Enemy,
+            attack_type: AttackType::Skill,
+            effect_type: Box::new(CounterHelixEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct CounterHelixEffect;
+
+impl ModEffectType for CounterHelixEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, _input: InputTarget) {
+        spin_attack(ctx, caster_id);
+    }
+
+    fn expected_damage(&self, stat: &EntityStat) -> (usize, usize) {
+        (stat.attack * 70 / 100, 0)
+    }
+}
+
+#[derive(Clone, Debug)]
+struct CounterHelixPassive;
+
+impl ModPassive for CounterHelixPassive {
+    fn clone_box(&self) -> Box<dyn ModPassive> { Box::new(self.clone()) }
+
+    fn on_damaged(&mut self, ctx: &mut GameCtx, rng_seed: usize, entity_id: usize, _attacker_id: usize, _damage: usize) {
+        if rng_seed % 100 < 10 {
+            spin_attack(ctx, entity_id);
+        }
+    }
+}
+
+fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
+    let (cx, cy) = match ctx.get_entity(caster_id) {
+        Some(e) => { let p = e.pos(); (p.x, p.y) }
+        None => return,
+    };
+    let team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
+    let dmg = ctx.get_entity(caster_id)
+        .map(|e| e.stat().attack * 70 / 100)
+        .unwrap_or(0);
+
+    let mut targets: Vec<usize> = Vec::new();
+    for i in 0..ctx.entity_count() {
+        if let Some(e) = ctx.entity_at(i) {
+            if e.team() != team && e.id() != caster_id {
+                let p = e.pos();
+                let dx = p.x as i64 - cx as i64;
+                let dy = p.y as i64 - cy as i64;
+                if dx * dx + dy * dy <= HELIX_RADIUS_SQ {
+                    targets.push(e.id());
+                }
+            }
+        }
+    }
+    for tid in targets {
+        ctx.deal_damage(caster_id, tid, dmg, 0, AttackType::Skill);
+    }
+}
+
+// ─── Culling Blade ────────────────────────────────────────────────────────────
+
+#[derive(Clone, Debug)]
+struct CullingBlade;
+
+impl ModAction for CullingBlade {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { "ult" }
+    fn duration(&self) -> usize { 80 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 3600 }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 40_000,
+            growth_range: 0,
+            start_timing: 25,
+            casting: CastingType::Targeting,
+            target: CastingTarget::Enemy,
+            attack_type: AttackType::Skill,
+            effect_type: Box::new(CullingBladeEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct CullingBladeEffect;
+
+impl ModEffectType for CullingBladeEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Target { target_id } = input else { return };
+
+        let target_pos = ctx.get_entity(target_id).map(|e| { let p = e.pos(); (p.x, p.y) });
+        let caster_pos = ctx.get_entity(caster_id).map(|e| { let p = e.pos(); (p.x, p.y) });
+        if let (Some((tx, ty)), Some((cx, cy))) = (target_pos, caster_pos) {
+            ctx.apply_cc(caster_id, CCState::ForceMove {
+                tick: 20,
+                dx: tx as i64 - cx as i64,
+                dy: ty as i64 - cy as i64,
+                speed: 5_500,
+            });
+        }
+
+        ctx.deal_damage(caster_id, target_id, 600, 0, AttackType::Skill);
+
+        let killed = ctx.get_entity(target_id)
+            .map(|e| e.hp().current == 0)
+            .unwrap_or(true);
+        if !killed { return; }
+
+        let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
+        let speed_buff = BuffState {
+            duration: BuffType::Time { tick: 300 },
+            move_speed_mult: 25,
+            ..Default::default()
+        };
+
+        let mut ally_ids: Vec<usize> = Vec::new();
+        for i in 0..ctx.entity_count() {
+            if let Some(e) = ctx.entity_at(i) {
+                if e.team() == caster_team {
+                    ally_ids.push(e.id());
+                }
+            }
+        }
+        for aid in ally_ids {
+            ctx.add_buff(aid, speed_buff.clone());
+        }
+
+        ctx.add_buff(caster_id, BuffState {
+            duration: BuffType::Permanent,
+            defence: 3,
+            ..Default::default()
+        });
+    }
+
+    fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) {
+        (600, 0)
+    }
+}
