@@ -172,7 +172,7 @@ impl ModEffectType for BerserkerCallEffect {
         let mut targets: Vec<usize> = Vec::new();
         for i in 0..ctx.entity_count() {
             if let Some(e) = ctx.entity_at(i) {
-                if e.team() != caster_team {
+                if e.team() != caster_team && e.is_champion() {
                     let p = e.pos();
                     let edx = p.x as i64 - land_x;
                     let edy = p.y as i64 - land_y;
@@ -254,7 +254,7 @@ fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
     let mut targets: Vec<usize> = Vec::new();
     for i in 0..ctx.entity_count() {
         if let Some(e) = ctx.entity_at(i) {
-            if e.team() != team && e.id() != caster_id {
+            if e.team() != team && e.id() != caster_id && e.is_champion() {
                 let p = e.pos();
                 let dx = p.x as i64 - cx as i64;
                 let dy = p.y as i64 - cy as i64;
@@ -329,7 +329,7 @@ impl ModEffectType for CullingBladeEffect {
         let mut ally_ids: Vec<usize> = Vec::new();
         for i in 0..ctx.entity_count() {
             if let Some(e) = ctx.entity_at(i) {
-                if e.team() == caster_team {
+                if e.team() == caster_team && e.is_champion() {
                     ally_ids.push(e.id());
                 }
             }
