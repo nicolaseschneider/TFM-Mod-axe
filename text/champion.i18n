@@ -415,10 +415,10 @@
         "ult": "지정한 적에게 돌진하여 <#ff9028ff>{Damage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>공격력의 {Coef}%<> 만큼의 <#ff9028ff>물리 피해<>를 입힌다. 주변 적에게 <#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>공격력의 {SplashCoef}%<> 만큼의 범위 피해와 <#ef5350ff>넉백<>을 부여하고 사라진다."
       },
       "axe_dota_axe": {
-        "name": "도끼",
-        "skill": "<#ff4422ff>광전사의 외침<>: 앞으로 돌진하여 착지 시 전투 함성을 내질러 주변 적을 <#ffcc00ff>2.5초간 도발<>합니다.",
-        "skill2": "<#cc3333ff>반격의 도끼회전<>: 도끼를 크게 회전시켜 주변 적 전체에게 <#ff9028ff>공격력의 70%<> 물리 피해를 입힙니다.",
-        "ult": "<#ff2200ff>처형의 검<>: 목표를 향해 돌진하여 단 한 번의 일격으로 처치합니다 (<#ffcc00ff>600 고정 피해<>). 처치 시 전체 아군이 <#00ff88ff>이동속도 +25%<>를 5초간 얻고, 도끼는 영구적으로 <#ffcc00ff>방어력 +3<>을 획득합니다."
+        "name": "액스",
+        "skill": "<#ff4422ff>광전사의 외침<>: 목표 방향으로 돌진(<#ffaa44ff>42 범위<>)한 후 주변 적(<#ffaa44ff>35 반경<>)을 <#ef5350ff>2.5초<> 동안 도발합니다.",
+        "skill2": "<#cc3333ff>카운터 헬릭스<>: 주변 적(<#ffaa44ff>30 반경<>)에게 <#ff9028ff>물리 피해(공격력의 70%)<>를 줍니다. 액스가 공격받을 때 <#ffb900ff>10% 확률<>로 발동됩니다.",
+        "ult": "<#ff2200ff>처단의 검<>: 적에게 돌진하여 <#ff9028ff>600의 고정 피해<>를 줍니다. 처치 시: 아군 전체 <#ceff99ff>이동 속도 +25%<>가 5초 동안 지속되며 액스의 방어력이 <#6aff55ff>+3 영구 증가<>합니다."
       }
     }
   },
@@ -839,9 +839,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Berserker's Call<>: Dash in the target direction (<#ffaa44ff>42 units<>), then taunt all nearby enemies (<#ffaa44ff>35 unit radius<>) forcing them to attack Axe for <#ef5350ff>2.5s<>.",
+        "skill2": "<#cc3333ff>Counter Helix<>: Spin and deal <#ff9028ff>70% AD physical damage<> to all nearby enemies (<#ffaa44ff>30 unit radius<>). Also triggers at a <#ffb900ff>10% chance<> whenever Axe is struck.",
+        "ult": "<#ff2200ff>Culling Blade<>: Leap to an enemy and deal <#ff9028ff>600 true damage<>. On kill: all allies gain <#ceff99ff>+25% move speed<> for 5s and Axe permanently gains <#6aff55ff>+3 armor<>."
       }
     }
   },
@@ -1261,10 +1261,10 @@
         "ult": "対象の敵にダッシュし、<#ff9028ff>{Damage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>攻撃力の{Coef}%<>の<#ff9028ff>物理ダメージ<>を与える。<#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>攻撃力の{SplashCoef}%<>のスプラッシュダメージを与え、近くの敵を<#ef5350ff>ノックバック<>させた後、消える。"
       },
       "axe_dota_axe": {
-        "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "name": "アックス",
+        "skill": "<#ff4422ff>バーサーカーズコール<>: 目標方向へダッシュ（<#ffaa44ff>射程42<>）し、着地地点の近くの敵（<#ffaa44ff>半径35<>）を<#ef5350ff>2.5秒<>挑発します。",
+        "skill2": "<#cc3333ff>カウンターヘリックス<>: 近くの敵（<#ffaa44ff>半径30<>）に<#ff9028ff>攻撃力70%の物理ダメージ<>を与えます。攻撃を受けるたびに<#ffb900ff>10%の確率<>で発動します。",
+        "ult": "<#ff2200ff>カリングブレード<>: 敵に飛びかかり<#ff9028ff>真のダメージ600<>を与えます。キル時：味方全員の<#ceff99ff>移動速度+25%<>が5秒間持続し、アックスの<#6aff55ff>防御力が永久に+3<>されます。"
       }
     }
   },
@@ -1685,9 +1685,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Berserker-Ruf<>: Stürmt in Zielrichtung (<#ffaa44ff>42 Einheiten<>) und provoziert alle nahen Feinde (<#ffaa44ff>Radius 35<>) für <#ef5350ff>2,5 Sek.<>, Axe anzugreifen.",
+        "skill2": "<#cc3333ff>Gegenhelix<>: Dreht sich und verursacht <#ff9028ff>70% AD physischen Schaden<> an nahen Feinden (<#ffaa44ff>Radius 30<>). Löst auch mit <#ffb900ff>10% Chance<> beim Treffer aus.",
+        "ult": "<#ff2200ff>Klinge des Mähers<>: Springt zu einem Feind und verursacht <#ff9028ff>600 wahren Schaden<>. Bei Kill: Alle Verbündeten erhalten <#ceff99ff>+25% Bewegungsgeschwindigkeit<> für 5 Sek. und Axe erhält dauerhaft <#6aff55ff>+3 Rüstung<>."
       }
     }
   },
@@ -2108,9 +2108,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Tiếng Gọi Của Berserker<>: Lao về phía mục tiêu (<#ffaa44ff>42 đơn vị<>), khiêu khích kẻ địch gần đó (<#ffaa44ff>bán kính 35<>) trong <#ef5350ff>2.5 giây<>.",
+        "skill2": "<#cc3333ff>Counter Helix<>: Xoay người gây <#ff9028ff>sát thương vật lý 70% AD<> cho kẻ địch gần đó (<#ffaa44ff>bán kính 30<>). Kích hoạt với <#ffb900ff>10% xác suất<> khi Axe bị tấn công.",
+        "ult": "<#ff2200ff>Lưỡi Kiếm Giết Chóc<>: Nhảy tới kẻ địch gây <#ff9028ff>600 sát thương thật<>. Khi hạ gục: Đồng đội được <#ceff99ff>+25% tốc độ di chuyển<> trong 5 giây và Axe vĩnh viễn được <#6aff55ff>+3 giáp<>."
       }
     }
   },
@@ -2531,9 +2531,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Chamado do Berserker<>: Avança na direção alvo (<#ffaa44ff>42 unidades<>) e provoca inimigos próximos (<#ffaa44ff>raio 35<>) por <#ef5350ff>2,5s<> a atacarem Axe.",
+        "skill2": "<#cc3333ff>Hélice Contrária<>: Gira causando <#ff9028ff>70% de dano físico AD<> a inimigos próximos (<#ffaa44ff>raio 30<>). Também ativa com <#ffb900ff>10% de chance<> ao ser atingido.",
+        "ult": "<#ff2200ff>Lâmina Ceifadora<>: Salta sobre um inimigo causando <#ff9028ff>600 de dano verdadeiro<>. Ao matar: todos os aliados ganham <#ceff99ff>+25% de velocidade<> por 5s e Axe ganha permanentemente <#6aff55ff>+3 de armadura<>."
       }
     }
   },
@@ -2954,9 +2954,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Berserker Çağrısı<>: Hedef yönünde ileri atılır (<#ffaa44ff>42 birim<>) ve yakındaki düşmanları (<#ffaa44ff>35 yarıçap<>) <#ef5350ff>2,5 sn<> süreyle kışkırtır.",
+        "skill2": "<#cc3333ff>Karşı Helix<>: Yakındaki düşmanlara (<#ffaa44ff>30 yarıçap<>) <#ff9028ff>%70 Fiziksel Hasar<> vererek döner. Axe saldırıya uğradığında <#ffb900ff>%10 ihtimalle<> tetiklenir.",
+        "ult": "<#ff2200ff>Biçme Kılıcı<>: Düşmana atlar ve <#ff9028ff>600 gerçek hasar<> verir. Öldürme: Tüm müttefikler 5sn boyunca <#ceff99ff>+%25 hareket hızı<> kazanır ve Axe kalıcı olarak <#6aff55ff>+3 zırh<> kazanır."
       }
     }
   },
@@ -3377,9 +3377,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Berserker's Roep<>: Stormt in doelrichting (<#ffaa44ff>42 eenheden<>) en provoceert nabije vijanden (<#ffaa44ff>straal 35<>) <#ef5350ff>2,5s<> lang.",
+        "skill2": "<#cc3333ff>Tegen-Helix<>: Draait en geeft <#ff9028ff>70% AD fysieke schade<> aan nabije vijanden (<#ffaa44ff>straal 30<>). Activeert ook met <#ffb900ff>10% kans<> als Axe wordt geraakt.",
+        "ult": "<#ff2200ff>Slagzwaard<>: Springt naar een vijand en geeft <#ff9028ff>600 ware schade<>. Bij kill: alle bondgenoten krijgen <#ceff99ff>+25% bewegingssnelheid<> voor 5s en Axe krijgt permanent <#6aff55ff>+3 wapenrusting<>."
       }
     }
   },
@@ -3799,10 +3799,10 @@
         "ult": "Рывком перемещается к выбранному врагу, нанося <#ff9028ff>[Damage]<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>физического урона<> в размере {Coef}% от силы атаки. Окружающим врагам наносит <#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>урона по площади<> в размере {SplashCoef}% от силы атаки, <#ef5350ff>отбрасывает<> их и исчезает."
       },
       "axe_dota_axe": {
-        "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "name": "Акс",
+        "skill": "<#ff4422ff>Призыв берсерка<>: Рывок в целевом направлении (<#ffaa44ff>42 единицы<>), провоцирует ближайших врагов (<#ffaa44ff>радиус 35<>) атаковать Акса <#ef5350ff>2,5 сек<>.",
+        "skill2": "<#cc3333ff>Вращение возмездия<>: Круговой удар по ближайшим врагам (<#ffaa44ff>радиус 30<>) — <#ff9028ff>70% физического урона<>. Срабатывает с <#ffb900ff>10% шансом<> при получении урона.",
+        "ult": "<#ff2200ff>Расправа<>: Прыгает к врагу и наносит <#ff9028ff>600 чистого урона<>. При убийстве: все союзники получают <#ceff99ff>+25% скорости передвижения<> на 5 сек, Акс навсегда получает <#6aff55ff>+3 брони<>."
       }
     }
   },
@@ -4222,10 +4222,10 @@
         "ult": "Se desplaza a un enemigo objetivo, causando <#ff9028ff>{Damage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{Coef}% del daño de ataque<> como <#ff9028ff>daño físico<>. Causa <#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{SplashCoef}% AD<> de daño de salpicadura y <#ef5350ff>empuja enemigos cercanos<>, luego desaparece."
       },
       "axe_dota_axe": {
-        "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "name": "Hacha",
+        "skill": "<#ff4422ff>Llamada del Berserker<>: Se lanza en la dirección objetivo (<#ffaa44ff>42 unidades<>) y provoca a los enemigos cercanos (<#ffaa44ff>radio 35<>) durante <#ef5350ff>2,5s<>.",
+        "skill2": "<#cc3333ff>Hélice Inversora<>: Gira causando <#ff9028ff>70% de daño físico AD<> a enemigos cercanos (<#ffaa44ff>radio 30<>). También se activa con <#ffb900ff>10% de probabilidad<> al recibir daño.",
+        "ult": "<#ff2200ff>Hoja Segadora<>: Salta sobre un enemigo causando <#ff9028ff>600 de daño verdadero<>. Al matar: todos los aliados ganan <#ceff99ff>+25% de velocidad<> durante 5s y Hacha gana permanentemente <#6aff55ff>+3 de armadura<>."
       }
     }
   },
@@ -4646,9 +4646,9 @@
       },
       "axe_dota_axe": {
         "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "skill": "<#ff4422ff>Appel du Berserker<>: Charge dans la direction ciblée (<#ffaa44ff>42 unités<>) et provoque les ennemis proches (<#ffaa44ff>rayon 35<>) pendant <#ef5350ff>2,5s<>.",
+        "skill2": "<#cc3333ff>Hélice Réactive<>: Tourne et inflige <#ff9028ff>70% de dégâts physiques AD<> aux ennemis proches (<#ffaa44ff>rayon 30<>). Se déclenche aussi avec <#ffb900ff>10% de chances<> en recevant un coup.",
+        "ult": "<#ff2200ff>Lame Faucheuse<>: Bondit sur un ennemi et inflige <#ff9028ff>600 dégâts vrais<>. En cas de kill : tous les alliés gagnent <#ceff99ff>+25% de vitesse<> pendant 5s et Axe gagne définitivement <#6aff55ff>+3 d'armure<>."
       }
     }
   },
@@ -5068,10 +5068,10 @@
         "ult": "向目标敌人冲刺，造成<#ff9028ff>{Damage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{Coef}%攻击力<>的<#ff9028ff>物理伤害<>。造成<#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{SplashCoef}%攻击<>的溅射伤害并<#ef5350ff>击退附近敌人<>，然后消失。"
       },
       "axe_dota_axe": {
-        "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "name": "斧王",
+        "skill": "<#ff4422ff>狂战士怒喝<>: 向目标方向冲刺（<#ffaa44ff>42单位<>），并嘲讽附近敌人（<#ffaa44ff>半径35<>）<#ef5350ff>2.5秒<>强制攻击斧王。",
+        "skill2": "<#cc3333ff>反击螺旋<>: 旋转对附近敌人（<#ffaa44ff>半径30<>）造成<#ff9028ff>70%攻击力的物理伤害<>。每次受到攻击时有<#ffb900ff>10%概率<>触发。",
+        "ult": "<#ff2200ff>淘汰之刃<>: 跳向目标敌人造成<#ff9028ff>600点真实伤害<>。击杀后：所有友军获得<#ceff99ff>移动速度+25%<>持续5秒，斧王永久获得<#6aff55ff>+3护甲<>。"
       }
     }
   },
@@ -5491,10 +5491,10 @@
         "ult": "向目標敵人衝刺，造成<#ff9028ff>{Damage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{Coef}%攻擊力<>的<#ff9028ff>物理傷害<>。造成<#ff9028ff>{SplashDamage}<> + <i#asset/base/ui/banpick/champion_stat_icon:ad_0><#ff9028ff>{SplashCoef}%攻擊<>的濺射傷害並<#ef5350ff>擊退附近敵人<>，然後消失。"
       },
       "axe_dota_axe": {
-        "name": "Axe",
-        "skill": "<#ff4422ff>Berserker's Call<>: Axe charges forward and lets out a battle cry on landing, <#ffcc00ff>taunting all nearby enemies<> for <#ffcc00ff>2.5s<>.",
-        "skill2": "<#cc3333ff>Counter Helix<>: Axe spins his axe in a wide arc, dealing <#ff9028ff>70% AD<> physical damage to all nearby enemies.",
-        "ult": "<#ff2200ff>Culling Blade<>: Axe charges at the target and executes them with a single blow (<#ffcc00ff>600 true damage<>). On a killing blow, all allies gain <#00ff88ff>+25% Move Speed<> for 5s and Axe permanently gains <#ffcc00ff>+3 Armour<>."
+        "name": "斧王",
+        "skill": "<#ff4422ff>狂戰士怒喝<>: 向目標方向衝刺（<#ffaa44ff>42單位<>），並嘲諷附近敵人（<#ffaa44ff>半徑35<>）<#ef5350ff>2.5秒<>強制攻擊斧王。",
+        "skill2": "<#cc3333ff>反擊螺旋<>: 旋轉對附近敵人（<#ffaa44ff>半徑30<>）造成<#ff9028ff>70%攻擊力的物理傷害<>。每次受到攻擊時有<#ffb900ff>10%機率<>觸發。",
+        "ult": "<#ff2200ff>淘汰之刃<>: 跳向目標敵人造成<#ff9028ff>600點真實傷害<>。擊殺後：所有友軍獲得<#ceff99ff>移動速度+25%<>持續5秒，斧王永久獲得<#6aff55ff>+3護甲<>。"
       }
     }
   }
