@@ -2,7 +2,7 @@ use mod_api::*;
 
 const MOD_ID: &str = "axe_dota";
 
-const CALL_JUMP_RANGE: u64 = 24_000;
+const CALL_JUMP_RANGE: u64 = 48_000;
 const CALL_TAUNT_RADIUS: i64 = 35_000;
 const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
 const CALL_TAUNT_TICKS: usize = 360; // 6 seconds at 60 ticks/sec
