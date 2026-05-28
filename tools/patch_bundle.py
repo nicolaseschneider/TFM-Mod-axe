@@ -1,34 +1,36 @@
 """
-Patch bundle.game_data: append all required axe_dota_axe assets.
+Patch bundle.game_data (0.4.4) with axe_dota_axe assets.
+
+Restores from the clean 0.4.4 backup first, then appends:
+  - #sheet  (png)        recolored Axe sprite
+  - #anim   (fanim)      Axe animation (berserker layout + skill alias + spin)
+  - 4x sound_info        attack / skill / skill2 / ult -> berserker mp3 clips
 
 Entry format: TYPE_LEN[4LE] + TYPE + PATH_LEN[4LE] + PATH + DATA_LEN[4LE] + DATA
-Header at byte 0: 4-byte entry count (LE), must be incremented.
+Header at byte 0: 4-byte little-endian entry count (incremented by 6).
 
-Types: 'png'(3), 'fanim'(5), 'sound_info'(10)
+If Steam updates the game again, delete bundle.game_data.bak_044, run
+Steam "Verify integrity of game files", then re-create the backup and re-run.
 """
 import struct, shutil, os, json
 
-BUNDLE  = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
-           "/steamapps/common/Teamfight Manager2/bundle.game_data")
-BACKUP  = BUNDLE + ".bak_axe"
-MOD_DIR = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
-           "/steamapps/common/Teamfight Manager2/mods/axe_dota")
+GAMEDIR = "/home/nicoefschneider/snap/steam/common/.local/share/Steam/steamapps/common/Teamfight Manager2"
+BUNDLE  = f"{GAMEDIR}/bundle.game_data"
+BACKUP  = f"{BUNDLE}.bak_044"           # clean verified 0.4.4 bundle
+MOD_DIR = f"{GAMEDIR}/mods/axe_dota"
 
 SHEET_PATH = b"asset/base/aseprite_resources/champions/axe_dota_axe#sheet"
 ANIM_PATH  = b"asset/base/aseprite_resources/champions/axe_dota_axe#anim"
 
-# sound_info entries: game looks up asset/base/sound/sfx/{id}_{action_name}
-# Axe actions: attack (action_name="attack"), skill (="skill"), skill2 (="skill2"), ult (="ult")
-# Point each to berserker's existing mp3 resources.
 SOUND_INFOS = {
     "asset/base/sound/sfx/axe_dota_axe_attack":
-        {"plays": [{"delay": 0.0, "clip": "berserker_attack0",          "volume": 1.0}]},
+        {"plays": [{"delay": 0.0, "clip": "berserker_attack0",         "volume": 1.0}]},
     "asset/base/sound/sfx/axe_dota_axe_skill":
-        {"plays": [{"delay": 0.0, "clip": "berserker_skill_resource",   "volume": 1.0}]},
+        {"plays": [{"delay": 0.0, "clip": "berserker_skill_resource",  "volume": 1.0}]},
     "asset/base/sound/sfx/axe_dota_axe_skill2":
-        {"plays": [{"delay": 0.0, "clip": "berserker_skill2_resource",  "volume": 1.0}]},
+        {"plays": [{"delay": 0.0, "clip": "berserker_skill2_resource", "volume": 1.0}]},
     "asset/base/sound/sfx/axe_dota_axe_ult":
-        {"plays": [{"delay": 0.0, "clip": "berserker_ult_resource",     "volume": 1.0}]},
+        {"plays": [{"delay": 0.0, "clip": "berserker_ult_resource",    "volume": 1.0}]},
 }
 
 def make_entry(type_str: bytes, path: bytes, data: bytes) -> bytes:
@@ -36,46 +38,36 @@ def make_entry(type_str: bytes, path: bytes, data: bytes) -> bytes:
           + struct.pack("<I", len(path))     + path
           + struct.pack("<I", len(data))     + data)
 
-# Restore from backup
-if os.path.exists(BACKUP):
-    shutil.copy2(BACKUP, BUNDLE)
-    print("Restored from backup")
-else:
-    shutil.copy2(BUNDLE, BACKUP)
-    print(f"Created backup: {BACKUP}")
+if not os.path.exists(BACKUP):
+    raise SystemExit(f"ERROR: clean 0.4.4 backup missing: {BACKUP}\n"
+                     "Run Steam 'Verify integrity', then: cp bundle.game_data bundle.game_data.bak_044")
+
+# Always start from the clean 0.4.4 backup
+shutil.copy2(BACKUP, BUNDLE)
+print("Restored clean 0.4.4 bundle from backup")
 
 bundle = bytearray(open(BUNDLE, "rb").read())
-
-if SHEET_PATH in bundle:
-    print("ERROR: previous sprite patch still present — backup may be stale")
-    exit(1)
-
 entry_count = struct.unpack_from("<I", bundle, 0)[0]
-print(f"Current entry count: {entry_count}")
+print(f"Base entry count: {entry_count}")
 
-# 1. Sprite sheet + anim
 png_data  = open(f"{MOD_DIR}/aseprite_resources/champions/axe_dota_axe.png",      "rb").read()
 anim_data = open(f"{MOD_DIR}/aseprite_resources/champions/axe_dota_axe.ase.json", "rb").read()
+
 new_entries = [
     make_entry(b"png",   SHEET_PATH, png_data),
     make_entry(b"fanim", ANIM_PATH,  anim_data),
 ]
-n = 2
-
-# 2. sound_info entries for each action
 for path_str, payload in SOUND_INFOS.items():
     data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     new_entries.append(make_entry(b"sound_info", path_str.encode(), data))
-    n += 1
 
-# Update header count and append
-struct.pack_into("<I", bundle, 0, entry_count + n)
-for entry in new_entries:
-    bundle += entry
+struct.pack_into("<I", bundle, 0, entry_count + len(new_entries))
+for e in new_entries:
+    bundle += e
 
 with open(BUNDLE, "wb") as f:
     f.write(bundle)
 
-print(f"Appended {n} entries (sprite, anim, {len(SOUND_INFOS)} sound_info)")
-print(f"New entry count: {entry_count + n}")
+print(f"Appended {len(new_entries)} entries (sprite, anim, {len(SOUND_INFOS)} sound_info)")
+print(f"New entry count: {entry_count + len(new_entries)}")
 print(f"New bundle size: {os.path.getsize(BUNDLE):,} bytes")

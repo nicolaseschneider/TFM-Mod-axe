@@ -2,8 +2,8 @@ use mod_api::*;
 
 const MOD_ID: &str = "axe_dota";
 
-const CALL_DASH_RANGE: i64 = 42_000;
-const CALL_TAUNT_RADIUS_SQ: i64 = 35_000 * 35_000;
+const CALL_TAUNT_RADIUS: i64 = 35_000;
+const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
 const HELIX_RADIUS_SQ: i64 = 30_000 * 30_000;
 
 fn init(_ctx: &GameCtx) -> ModRegistration {
@@ -58,9 +58,9 @@ impl ModChampionInfo for Axe {
     fn skill_icon(&self, skill_index: usize) -> (String, String) {
         let sheet = "asset/base/aseprite_resources/UI_aseprite/skill_icon".to_string();
         let tag = match skill_index {
-            0 => "berserker_0",  // attack
-            1 => "fighter_1",    // Berserker's Call (charge dash)
-            2 => "berserker_2",  // Counter Helix (spin)
+            0 => "berserker_0",   // attack
+            1 => "berserker_2",   // Counter Helix (spin)
+            2 => "fighter_1",     // Berserker's Call (taunt)
             3 => "executioner_3", // Culling Blade (execute)
             _ => "berserker_0",
         };
@@ -68,8 +68,8 @@ impl ModChampionInfo for Axe {
     }
 
     fn attack(&self) -> Box<dyn ModAction> { Box::new(AxeAttack) }
-    fn skill(&self) -> Box<dyn ModAction> { Box::new(BerserkerCall) }
-    fn skill2(&self) -> Box<dyn ModAction> { Box::new(CounterHelixActive) }
+    fn skill(&self) -> Box<dyn ModAction> { Box::new(CounterHelixActive) }
+    fn skill2(&self) -> Box<dyn ModAction> { Box::new(BerserkerCall) }
     fn ult(&self) -> Option<Box<dyn ModAction>> { Some(Box::new(CullingBlade)) }
     fn passive(&self) -> Option<Box<dyn ModPassive>> { Some(Box::new(CounterHelixPassive)) }
 }
@@ -114,24 +114,24 @@ impl ModEffectType for AxeAttackEffect {
     }
 }
 
-// ─── Berserker's Call (dash + taunt) ─────────────────────────────────────────
+// ─── Berserker's Call (AoE taunt, knight-style) ───────────────────────────────
 
 #[derive(Clone, Debug)]
 struct BerserkerCall;
 
 impl ModAction for BerserkerCall {
     fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
-    fn action_name(&self) -> &str { "skill" }
-    fn duration(&self) -> usize { 70 }
+    fn action_name(&self) -> &str { "skill2" }
+    fn duration(&self) -> usize { 50 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 420 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
-            range: 42_000,
+            range: CALL_TAUNT_RADIUS as u64,
             growth_range: 0,
             start_timing: 10,
-            casting: CastingType::Direction,
+            casting: CastingType::None,
             target: CastingTarget::Enemy,
             attack_type: AttackType::Skill,
             effect_type: Box::new(BerserkerCallEffect),
@@ -143,39 +143,24 @@ impl ModAction for BerserkerCall {
 struct BerserkerCallEffect;
 
 impl ModEffectType for BerserkerCallEffect {
-    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
-        let InputTarget::Dir { dir_x, dir_y } = input else { return };
+    fn on_caster(&self) -> bool { true }
+    fn auto_target(&self) -> bool { true }
 
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, _input: InputTarget) {
         let (cx, cy) = match ctx.get_entity(caster_id) {
             Some(e) => { let p = e.pos(); (p.x, p.y) }
             None => return,
         };
         let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
 
-        // Normalize direction then scale to dash range (cast to f64 for normalization).
-        let fx = dir_x as f64;
-        let fy = dir_y as f64;
-        let len = (fx * fx + fy * fy).sqrt().max(f64::EPSILON);
-        let dash_dx = ((fx / len) * CALL_DASH_RANGE as f64) as i64;
-        let dash_dy = ((fy / len) * CALL_DASH_RANGE as f64) as i64;
-
-        let land_x = cx as i64 + dash_dx;
-        let land_y = cy as i64 + dash_dy;
-
-        ctx.apply_cc(caster_id, CCState::ForceMove {
-            tick: 30,
-            dx: dash_dx,
-            dy: dash_dy,
-            speed: 4_500,
-        });
-
+        // Taunt all nearby enemy champions toward Axe (no dash — like the knight's taunt).
         let mut targets: Vec<usize> = Vec::new();
         for i in 0..ctx.entity_count() {
             if let Some(e) = ctx.entity_at(i) {
                 if e.team() != caster_team && e.is_champion() {
                     let p = e.pos();
-                    let edx = p.x as i64 - land_x;
-                    let edy = p.y as i64 - land_y;
+                    let edx = p.x as i64 - cx as i64;
+                    let edy = p.y as i64 - cy as i64;
                     if edx * edx + edy * edy <= CALL_TAUNT_RADIUS_SQ {
                         targets.push(e.id());
                     }
@@ -185,9 +170,17 @@ impl ModEffectType for BerserkerCallEffect {
         for tid in targets {
             ctx.apply_cc(tid, CCState::Taunt { tick: 150, target: caster_id });
         }
+
+        // Dota flavor: Axe gains bonus armor for the taunt's duration.
+        ctx.add_buff(caster_id, BuffState {
+            duration: BuffType::Time { tick: 150 },
+            defence: 12,
+            ..Default::default()
+        });
     }
 
     fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) { (0, 0) }
+    fn expected_cc_time(&self) -> Option<usize> { Some(150) }
 }
 
 // ─── Counter Helix ────────────────────────────────────────────────────────────
@@ -197,7 +190,7 @@ struct CounterHelixActive;
 
 impl ModAction for CounterHelixActive {
     fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
-    fn action_name(&self) -> &str { "skill2" }
+    fn action_name(&self) -> &str { "skill" }
     fn duration(&self) -> usize { 40 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 150 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
@@ -219,6 +212,9 @@ impl ModAction for CounterHelixActive {
 struct CounterHelixEffect;
 
 impl ModEffectType for CounterHelixEffect {
+    fn on_caster(&self) -> bool { true }
+    fn auto_target(&self) -> bool { true }
+
     fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, _input: InputTarget) {
         spin_attack(ctx, caster_id);
     }
@@ -235,7 +231,7 @@ impl ModPassive for CounterHelixPassive {
     fn clone_box(&self) -> Box<dyn ModPassive> { Box::new(self.clone()) }
 
     fn on_damaged(&mut self, ctx: &mut GameCtx, rng_seed: usize, entity_id: usize, _attacker_id: usize, _damage: usize) {
-        if rng_seed % 100 < 10 {
+        if rng_seed % 100 < 20 {
             spin_attack(ctx, entity_id);
         }
     }
