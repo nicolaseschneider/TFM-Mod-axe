@@ -157,13 +157,14 @@ impl ModEffectType for BerserkerCallEffect {
         let caster_pos = ctx.get_entity(caster_id).map(|e| { let p = e.pos(); (p.x, p.y) });
         let (Some((tx, ty)), Some((cx, cy))) = (target_pos, caster_pos) else { return };
 
-        // Jump TO the target.
-        ctx.apply_cc(caster_id, CCState::ForceMove {
-            tick: 20,
-            dx: tx as i64 - cx as i64,
-            dy: ty as i64 - cy as i64,
-            speed: 5_000,
-        });
+        // Jump TO the target: travel distance = speed * tick, so set tick from the
+        // actual distance to avoid overshooting close targets.
+        let dx = tx as i64 - cx as i64;
+        let dy = ty as i64 - cy as i64;
+        let dist = ((dx * dx + dy * dy) as f64).sqrt();
+        let speed: u64 = 5_000;
+        let tick = ((dist / speed as f64).round() as u64).max(1);
+        ctx.apply_cc(caster_id, CCState::ForceMove { tick, dx, dy, speed });
 
         let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
 
