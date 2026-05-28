@@ -295,7 +295,17 @@ impl ModEffectType for CullingBladeEffect {
             });
         }
 
-        ctx.deal_damage(caster_id, target_id, 600, 0, AttackType::Skill);
+        // Execute: instant kill if the target is at/below 25% max HP or <= 600 HP.
+        // Otherwise just a moderate hit with no execute bonus.
+        let (cur, max) = ctx.get_entity(target_id)
+            .map(|e| { let h = e.hp(); (h.current, h.max) })
+            .unwrap_or((0, 0));
+        let execute = cur <= max * 25 / 100 || cur <= 600;
+        if execute {
+            ctx.deal_damage(caster_id, target_id, 1_000_000, 0, AttackType::Skill);
+        } else {
+            ctx.deal_damage(caster_id, target_id, 250, 0, AttackType::Skill);
+        }
 
         let killed = ctx.get_entity(target_id)
             .map(|e| e.hp().current == 0)
