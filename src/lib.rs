@@ -24,7 +24,7 @@ impl ModChampionInfo for Axe {
     fn name(&self) -> &str { "axe_dota_axe" }
     fn category(&self) -> ChampionCategory { ChampionCategory::Melee }
     fn tags(&self) -> Vec<ChampionTag> {
-        vec![ChampionTag::AD, ChampionTag::Tank, ChampionTag::Melee, ChampionTag::CC]
+        vec![ChampionTag::AD, ChampionTag::Tank, ChampionTag::CC]
     }
 
     fn stat(&self) -> EntityStat {
