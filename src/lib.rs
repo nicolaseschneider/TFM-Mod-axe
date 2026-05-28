@@ -127,6 +127,11 @@ impl ModAction for BerserkerCall {
     fn duration(&self) -> usize { 50 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 420 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::EnemyChampion }
+    fn description(&self) -> String {
+        "<#ff4422ff>Berserker's Call<>: Leap onto a target enemy champion and <#ef5350ff>taunt<> \
+         nearby enemies (champions and creeps) for <#ffb900ff>6s<>, forcing them to attack Axe. \
+         Axe gains <#6aff55ff>+400 armor<> during the taunt.".to_string()
+    }
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
@@ -205,6 +210,11 @@ impl ModAction for CounterHelixActive {
     fn duration(&self) -> usize { 0 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 0 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+    fn description(&self) -> String {
+        "<#cc3333ff>Counter Helix<> (Passive): When struck, <#ffb900ff>20% chance<> to spin, \
+         dealing <#ff9028ff>70% of attack damage<> as physical damage to all nearby enemies \
+         (champions and creeps). No cooldown.".to_string()
+    }
 
     fn effect(&self) -> Option<ModEffect> { None }
 }
@@ -229,7 +239,7 @@ fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
     };
 
     // Play the spin animation so the proc is visible.
-    ctx.apply_cc(caster_id, CCState::Animation { name: "skill".to_string(), tick: 18 });
+    ctx.apply_cc(caster_id, CCState::Animation { name: "skill".to_string(), tick: 9 });
     let team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
     let dmg = ctx.get_entity(caster_id)
         .map(|e| e.stat().attack * 70 / 100)
@@ -266,6 +276,12 @@ impl ModAction for CullingBlade {
     fn duration(&self) -> usize { 80 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 1800 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::EnemyChampion }
+    fn description(&self) -> String {
+        "<#ff2200ff>Culling Blade<>: <#ff9028ff>Execute<> a target enemy champion at or below \
+         <#ffb900ff>25% max HP or 600 HP<> (instant kill); otherwise deal <#ff9028ff>250 damage<>. \
+         On kill: all allies gain <#ceff99ff>+25% move speed<> for 5s and Axe permanently gains \
+         <#6aff55ff>+5 armor<>.".to_string()
+    }
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
