@@ -6,5 +6,9 @@
   "asset/base/style/champion_view": {
     "remapping": "asset/axe_dota/style/champion_view",
     "type": "override"
+  },
+  "asset/base/setting/champion_info": {
+    "remapping": "asset/axe_dota/setting/champion_info",
+    "type": "override"
   }
 }
