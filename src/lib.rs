@@ -2,6 +2,7 @@ use mod_api::*;
 
 const MOD_ID: &str = "axe_dota";
 
+const CALL_JUMP_RANGE: u64 = 42_000;
 const CALL_TAUNT_RADIUS: i64 = 35_000;
 const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
 const HELIX_RADIUS_SQ: i64 = 30_000 * 30_000;
@@ -128,10 +129,10 @@ impl ModAction for BerserkerCall {
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
-            range: CALL_TAUNT_RADIUS as u64,
+            range: CALL_JUMP_RANGE,
             growth_range: 0,
             start_timing: 10,
-            casting: CastingType::None,
+            casting: CastingType::Targeting,
             target: CastingTarget::Enemy,
             attack_type: AttackType::Skill,
             effect_type: Box::new(BerserkerCallEffect),
@@ -143,24 +144,31 @@ impl ModAction for BerserkerCall {
 struct BerserkerCallEffect;
 
 impl ModEffectType for BerserkerCallEffect {
-    fn on_caster(&self) -> bool { true }
-    fn auto_target(&self) -> bool { true }
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Target { target_id } = input else { return };
 
-    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, _input: InputTarget) {
-        let (cx, cy) = match ctx.get_entity(caster_id) {
-            Some(e) => { let p = e.pos(); (p.x, p.y) }
-            None => return,
-        };
+        let target_pos = ctx.get_entity(target_id).map(|e| { let p = e.pos(); (p.x, p.y) });
+        let caster_pos = ctx.get_entity(caster_id).map(|e| { let p = e.pos(); (p.x, p.y) });
+        let (Some((tx, ty)), Some((cx, cy))) = (target_pos, caster_pos) else { return };
+
+        // Jump TO the target.
+        ctx.apply_cc(caster_id, CCState::ForceMove {
+            tick: 20,
+            dx: tx as i64 - cx as i64,
+            dy: ty as i64 - cy as i64,
+            speed: 5_000,
+        });
+
         let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
 
-        // Taunt all nearby enemy champions toward Axe (no dash — like the knight's taunt).
+        // Taunt enemy champions near the landing spot (the target's position).
         let mut targets: Vec<usize> = Vec::new();
         for i in 0..ctx.entity_count() {
             if let Some(e) = ctx.entity_at(i) {
                 if e.team() != caster_team && e.is_champion() {
                     let p = e.pos();
-                    let edx = p.x as i64 - cx as i64;
-                    let edy = p.y as i64 - cy as i64;
+                    let edx = p.x as i64 - tx as i64;
+                    let edy = p.y as i64 - ty as i64;
                     if edx * edx + edy * edy <= CALL_TAUNT_RADIUS_SQ {
                         targets.push(e.id());
                     }
@@ -174,7 +182,7 @@ impl ModEffectType for BerserkerCallEffect {
         // Dota flavor: Axe gains bonus armor for the taunt's duration.
         ctx.add_buff(caster_id, BuffState {
             duration: BuffType::Time { tick: 150 },
-            defence: 12,
+            defence: 50,
             ..Default::default()
         });
     }
@@ -274,7 +282,7 @@ impl ModAction for CullingBlade {
     fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
     fn action_name(&self) -> &str { "ult" }
     fn duration(&self) -> usize { 80 }
-    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 3600 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 1800 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
 
     fn effect(&self) -> Option<ModEffect> {
@@ -336,7 +344,7 @@ impl ModEffectType for CullingBladeEffect {
 
         ctx.add_buff(caster_id, BuffState {
             duration: BuffType::Permanent,
-            defence: 3,
+            defence: 5,
             ..Default::default()
         });
     }
