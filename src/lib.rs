@@ -2,7 +2,7 @@ use mod_api::*;
 
 const MOD_ID: &str = "axe_dota";
 
-const CALL_JUMP_RANGE: u64 = 42_000;
+const CALL_JUMP_RANGE: u64 = 24_000;
 const CALL_TAUNT_RADIUS: i64 = 35_000;
 const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
 const CALL_TAUNT_TICKS: usize = 360; // 6 seconds at 60 ticks/sec
@@ -126,7 +126,7 @@ impl ModAction for BerserkerCall {
     fn action_name(&self) -> &str { "skill2" }
     fn duration(&self) -> usize { 50 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 420 }
-    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::EnemyChampion }
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
@@ -134,7 +134,7 @@ impl ModAction for BerserkerCall {
             growth_range: 0,
             start_timing: 10,
             casting: CastingType::Targeting,
-            target: CastingTarget::Enemy,
+            target: CastingTarget::EnemyChampion,
             attack_type: AttackType::Skill,
             effect_type: Box::new(BerserkerCallEffect),
         })
@@ -162,11 +162,11 @@ impl ModEffectType for BerserkerCallEffect {
 
         let caster_team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
 
-        // Taunt enemy champions near the landing spot (the target's position).
+        // Taunt nearby enemies (champions + creeps/minions, not towers) near the landing spot.
         let mut targets: Vec<usize> = Vec::new();
         for i in 0..ctx.entity_count() {
             if let Some(e) = ctx.entity_at(i) {
-                if e.team() != caster_team && e.is_champion() {
+                if e.team() != caster_team && !e.is_tower() {
                     let p = e.pos();
                     let edx = p.x as i64 - tx as i64;
                     let edy = p.y as i64 - ty as i64;
@@ -227,6 +227,9 @@ fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
         Some(e) => { let p = e.pos(); (p.x, p.y) }
         None => return,
     };
+
+    // Play the spin animation so the proc is visible.
+    ctx.apply_cc(caster_id, CCState::Animation { name: "skill".to_string(), tick: 18 });
     let team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
     let dmg = ctx.get_entity(caster_id)
         .map(|e| e.stat().attack * 70 / 100)
@@ -262,7 +265,7 @@ impl ModAction for CullingBlade {
     fn action_name(&self) -> &str { "ult" }
     fn duration(&self) -> usize { 80 }
     fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 1800 }
-    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::EnemyChampion }
 
     fn effect(&self) -> Option<ModEffect> {
         Some(ModEffect {
@@ -270,7 +273,7 @@ impl ModAction for CullingBlade {
             growth_range: 0,
             start_timing: 25,
             casting: CastingType::Targeting,
-            target: CastingTarget::Enemy,
+            target: CastingTarget::EnemyChampion,
             attack_type: AttackType::Skill,
             effect_type: Box::new(CullingBladeEffect),
         })
@@ -283,17 +286,6 @@ struct CullingBladeEffect;
 impl ModEffectType for CullingBladeEffect {
     fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
         let InputTarget::Target { target_id } = input else { return };
-
-        let target_pos = ctx.get_entity(target_id).map(|e| { let p = e.pos(); (p.x, p.y) });
-        let caster_pos = ctx.get_entity(caster_id).map(|e| { let p = e.pos(); (p.x, p.y) });
-        if let (Some((tx, ty)), Some((cx, cy))) = (target_pos, caster_pos) {
-            ctx.apply_cc(caster_id, CCState::ForceMove {
-                tick: 20,
-                dx: tx as i64 - cx as i64,
-                dy: ty as i64 - cy as i64,
-                speed: 5_500,
-            });
-        }
 
         // Execute: instant kill if the target is at/below 25% max HP or <= 600 HP.
         // Otherwise just a moderate hit with no execute bonus.
