@@ -1,55 +1,71 @@
 """
-Append axe_dota_axe sprite (#sheet) and anim (#anim) entries to bundle.game_data.
+Patch bundle.game_data: append axe_dota_axe #sheet (png) and #anim (fanim) entries.
 
-Bundle entry format: \x00\x00 + TYPE[4] + PATH_LEN[4LE] + PATH + DATA_LEN[4LE] + DATA
-  - PNG  type bytes: \x00png  (0x00, 0x70, 0x6E, 0x67)
-  - anim type bytes: anim     (0x61, 0x6E, 0x69, 0x6D)
+Correct bundle entry format (NO \x00\x00 marker):
+  TYPE_LEN[4LE] + TYPE[type_len] + PATH_LEN[4LE] + PATH[path_len] + DATA_LEN[4LE] + DATA[data_len]
+
+Header at byte 0: 4-byte entry count (little-endian). Must be incremented by 2.
+
+Types:
+  "png"   (3 bytes) for sprite sheets
+  "fanim" (5 bytes) for animation JSON
 """
 import struct, shutil, os
 
 BUNDLE = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
           "/steamapps/common/Teamfight Manager2/bundle.game_data")
-PNG_SRC   = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
-             "/steamapps/common/Teamfight Manager2/mods/axe_dota"
-             "/aseprite_resources/champions/axe_dota_axe.png")
-ANIM_SRC  = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
-             "/steamapps/common/Teamfight Manager2/mods/axe_dota"
-             "/aseprite_resources/champions/axe_dota_axe.ase.json")
-BACKUP    = BUNDLE + ".bak_axe"
+BACKUP = BUNDLE + ".bak_axe"
+PNG_SRC  = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
+            "/steamapps/common/Teamfight Manager2/mods/axe_dota"
+            "/aseprite_resources/champions/axe_dota_axe.png")
+ANIM_SRC = ("/home/nicoefschneider/snap/steam/common/.local/share/Steam"
+            "/steamapps/common/Teamfight Manager2/mods/axe_dota"
+            "/aseprite_resources/champions/axe_dota_axe.ase.json")
 
 SHEET_PATH = b"asset/base/aseprite_resources/champions/axe_dota_axe#sheet"
 ANIM_PATH  = b"asset/base/aseprite_resources/champions/axe_dota_axe#anim"
 
-def make_entry(type4: bytes, path: bytes, data: bytes) -> bytes:
-    assert len(type4) == 4
-    hdr = b"\x00\x00" + type4 + struct.pack("<I", len(path))
-    tail = struct.pack("<I", len(data))
-    return hdr + path + tail + data
+def make_entry(type_str: bytes, path: bytes, data: bytes) -> bytes:
+    return (struct.pack("<I", len(type_str)) + type_str
+          + struct.pack("<I", len(path))     + path
+          + struct.pack("<I", len(data))     + data)
 
-# Check not already patched
-bundle_data = open(BUNDLE, "rb").read()
-if SHEET_PATH in bundle_data:
-    print("Already patched — axe_dota_axe#sheet already in bundle")
+# --- Restore from backup first if backup exists ---
+if os.path.exists(BACKUP):
+    shutil.copy2(BACKUP, BUNDLE)
+    print("Restored from backup")
+else:
+    shutil.copy2(BUNDLE, BACKUP)
+    print(f"Created backup: {BACKUP}")
+
+bundle = bytearray(open(BUNDLE, "rb").read())
+
+if SHEET_PATH in bundle:
+    print("Already patched!")
     exit(0)
 
-# Backup
-if not os.path.exists(BACKUP):
-    shutil.copy2(BUNDLE, BACKUP)
-    print(f"Backup created: {BACKUP}")
-else:
-    print(f"Backup already exists: {BACKUP}")
+# Read and increment header count
+entry_count = struct.unpack_from("<I", bundle, 0)[0]
+print(f"Current entry count: {entry_count}")
 
 png_data  = open(PNG_SRC,  "rb").read()
 anim_data = open(ANIM_SRC, "rb").read()
 
-sheet_entry = make_entry(b"\x00png", SHEET_PATH, png_data)
-anim_entry  = make_entry(b"anim",   ANIM_PATH,  anim_data)
+sheet_entry = make_entry(b"png",   SHEET_PATH, png_data)
+anim_entry  = make_entry(b"fanim", ANIM_PATH,  anim_data)
 
-with open(BUNDLE, "ab") as f:
-    f.write(sheet_entry)
-    f.write(anim_entry)
+# Update header count
+struct.pack_into("<I", bundle, 0, entry_count + 2)
+print(f"Updated entry count: {entry_count + 2}")
 
-print(f"Appended {len(sheet_entry)} bytes (sheet) + {len(anim_entry)} bytes (anim)")
-print(f"New bundle size: {os.path.getsize(BUNDLE):,} bytes")
-print(f"Sheet path ({len(SHEET_PATH)}b): {SHEET_PATH.decode()}")
-print(f"Anim  path ({len(ANIM_PATH)}b):  {ANIM_PATH.decode()}")
+# Append entries
+bundle += sheet_entry
+bundle += anim_entry
+
+with open(BUNDLE, "wb") as f:
+    f.write(bundle)
+
+size = os.path.getsize(BUNDLE)
+print(f"Appended {len(sheet_entry)} (sheet) + {len(anim_entry)} (anim) bytes")
+print(f"New bundle size: {size:,} bytes")
+print(f"New entry count header: {struct.unpack_from('<I', bundle, 0)[0]}")
