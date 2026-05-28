@@ -61,6 +61,14 @@ for path_str, payload in SOUND_INFOS.items():
     data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     new_entries.append(make_entry(b"sound_info", path_str.encode(), data))
 
+# Test Dummy champion — reuses Axe's sprite/anim, plain berserker sounds.
+new_entries.append(make_entry(b"png",   b"asset/base/aseprite_resources/champions/axe_dota_dummy#sheet", png_data))
+new_entries.append(make_entry(b"fanim", b"asset/base/aseprite_resources/champions/axe_dota_dummy#anim",  anim_data))
+for action, clip in [("attack","berserker_attack0"), ("skill","berserker_skill_resource"), ("skill2","berserker_skill2_resource")]:
+    payload = {"plays": [{"delay": 0.0, "clip": clip, "volume": 1.0}]}
+    data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    new_entries.append(make_entry(b"sound_info", f"asset/base/sound/sfx/axe_dota_dummy_{action}".encode(), data))
+
 struct.pack_into("<I", bundle, 0, entry_count + len(new_entries))
 for e in new_entries:
     bundle += e

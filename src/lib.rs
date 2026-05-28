@@ -11,6 +11,7 @@ const HELIX_RADIUS_SQ: i64 = 90_000 * 90_000;
 fn init(_ctx: &GameCtx) -> ModRegistration {
     let mut reg = ModRegistration::new(MOD_ID);
     reg.add_champion(Axe);
+    reg.add_champion(TestDummy);
     reg
 }
 
@@ -350,4 +351,118 @@ impl ModEffectType for CullingBladeEffect {
     fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) {
         (600, 0)
     }
+}
+
+// ─── Test Dummy (boring diagnostic champion) ──────────────────────────────────
+// Minimal melee champion: vanilla stats, plain basic attack, two trivial skills.
+// Used to test whether native mod champions ever register kills/damage/stats.
+
+#[derive(Clone, Debug)]
+struct TestDummy;
+
+impl ModChampionInfo for TestDummy {
+    fn id(&self) -> &str { "axe_dota_dummy" }
+    fn name(&self) -> &str { "axe_dota_dummy" }
+    fn category(&self) -> ChampionCategory { ChampionCategory::Melee }
+    fn tags(&self) -> Vec<ChampionTag> { vec![ChampionTag::AD] }
+
+    fn stat(&self) -> EntityStat {
+        EntityStat {
+            attack: 100, magic_power: 0, hp: 950, defence: 30,
+            magic_resistance: 20, move_speed: 1000, hp_regen: 0, stack: 0, crit_chance: 0,
+        }
+    }
+    fn growth(&self) -> EntityStat {
+        EntityStat {
+            attack: 20, magic_power: 0, hp: 90, defence: 9,
+            magic_resistance: 4, move_speed: 12, hp_regen: 0, stack: 0, crit_chance: 0,
+        }
+    }
+
+    fn skill_icon(&self, skill_index: usize) -> (String, String) {
+        let sheet = "asset/base/aseprite_resources/UI_aseprite/skill_icon".to_string();
+        let tag = match skill_index {
+            0 => "fighter_0",
+            1 => "fighter_1",
+            2 => "fighter_2",
+            3 => "fighter_3",
+            _ => "fighter_0",
+        };
+        (sheet, tag.to_string())
+    }
+
+    fn attack(&self) -> Box<dyn ModAction> { Box::new(DummyAttack) }
+    fn skill(&self) -> Box<dyn ModAction> { Box::new(DummySkill { name: "skill", cd: 180 }) }
+    fn skill2(&self) -> Box<dyn ModAction> { Box::new(DummySkill { name: "skill2", cd: 180 }) }
+    fn ult(&self) -> Option<Box<dyn ModAction>> { None }
+    fn passive(&self) -> Option<Box<dyn ModPassive>> { None }
+}
+
+#[derive(Clone, Debug)]
+struct DummyAttack;
+
+impl ModAction for DummyAttack {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { "attack" }
+    fn duration(&self) -> usize { 50 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 0 }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 23_000,
+            growth_range: 0,
+            start_timing: 13,
+            casting: CastingType::Targeting,
+            target: CastingTarget::Enemy,
+            attack_type: AttackType::BaseAttack,
+            effect_type: Box::new(DummyAttackEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct DummyAttackEffect;
+
+impl ModEffectType for DummyAttackEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Target { target_id } = input else { return };
+        let dmg = ctx.get_entity(caster_id).map(|e| e.stat().attack).unwrap_or(0);
+        ctx.deal_damage(caster_id, target_id, dmg, 0, AttackType::BaseAttack);
+    }
+    fn expected_damage(&self, stat: &EntityStat) -> (usize, usize) { (stat.attack, 0) }
+}
+
+#[derive(Clone, Debug)]
+struct DummySkill { name: &'static str, cd: usize }
+
+impl ModAction for DummySkill {
+    fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
+    fn action_name(&self) -> &str { self.name }
+    fn duration(&self) -> usize { 30 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { self.cd }
+    fn casting_target(&self) -> CastingTarget { CastingTarget::EnemyChampion }
+
+    fn effect(&self) -> Option<ModEffect> {
+        Some(ModEffect {
+            range: 23_000,
+            growth_range: 0,
+            start_timing: 10,
+            casting: CastingType::Targeting,
+            target: CastingTarget::EnemyChampion,
+            attack_type: AttackType::Skill,
+            effect_type: Box::new(DummySkillEffect),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct DummySkillEffect;
+
+impl ModEffectType for DummySkillEffect {
+    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, input: InputTarget) {
+        let InputTarget::Target { target_id } = input else { return };
+        ctx.deal_damage(caster_id, target_id, 150, 0, AttackType::Skill);
+    }
+    fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) { (150, 0) }
 }
