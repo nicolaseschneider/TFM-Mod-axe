@@ -6,7 +6,7 @@ const CALL_JUMP_RANGE: u64 = 24_000;
 const CALL_TAUNT_RADIUS: i64 = 35_000;
 const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
 const CALL_TAUNT_TICKS: usize = 360; // 6 seconds at 60 ticks/sec
-const HELIX_RADIUS_SQ: i64 = 30_000 * 30_000;
+const HELIX_RADIUS_SQ: i64 = 90_000 * 90_000;
 
 fn init(_ctx: &GameCtx) -> ModRegistration {
     let mut reg = ModRegistration::new(MOD_ID);
@@ -241,8 +241,6 @@ fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
         None => return,
     };
 
-    // Play the spin animation so the proc is visible.
-    ctx.apply_cc(caster_id, CCState::Animation { name: "skill".to_string(), tick: 9 });
     let team = ctx.get_entity(caster_id).map(|e| e.team()).unwrap_or(usize::MAX);
     let dmg = ctx.get_entity(caster_id)
         .map(|e| e.stat().attack * 70 / 100)
