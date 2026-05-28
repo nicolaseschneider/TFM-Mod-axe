@@ -5,6 +5,7 @@ const MOD_ID: &str = "axe_dota";
 const CALL_JUMP_RANGE: u64 = 42_000;
 const CALL_TAUNT_RADIUS: i64 = 35_000;
 const CALL_TAUNT_RADIUS_SQ: i64 = CALL_TAUNT_RADIUS * CALL_TAUNT_RADIUS;
+const CALL_TAUNT_TICKS: usize = 360; // 6 seconds at 60 ticks/sec
 const HELIX_RADIUS_SQ: i64 = 30_000 * 30_000;
 
 fn init(_ctx: &GameCtx) -> ModRegistration {
@@ -176,19 +177,19 @@ impl ModEffectType for BerserkerCallEffect {
             }
         }
         for tid in targets {
-            ctx.apply_cc(tid, CCState::Taunt { tick: 150, target: caster_id });
+            ctx.apply_cc(tid, CCState::Taunt { tick: CALL_TAUNT_TICKS as u64, target: caster_id });
         }
 
-        // Dota flavor: Axe gains bonus armor for the taunt's duration.
+        // Dota flavor: Axe gains heavy bonus armor for the taunt's duration.
         ctx.add_buff(caster_id, BuffState {
-            duration: BuffType::Time { tick: 150 },
-            defence: 50,
+            duration: BuffType::Time { tick: CALL_TAUNT_TICKS },
+            defence: 400,
             ..Default::default()
         });
     }
 
     fn expected_damage(&self, _stat: &EntityStat) -> (usize, usize) { (0, 0) }
-    fn expected_cc_time(&self) -> Option<usize> { Some(150) }
+    fn expected_cc_time(&self) -> Option<usize> { Some(CALL_TAUNT_TICKS) }
 }
 
 // ─── Counter Helix ────────────────────────────────────────────────────────────
@@ -196,40 +197,16 @@ impl ModEffectType for BerserkerCallEffect {
 #[derive(Clone, Debug)]
 struct CounterHelixActive;
 
+// Counter Helix is passive-only (like Ogre's Q): no active cast, 0 cooldown.
+// The skill1 slot is inert; the spin is driven entirely by CounterHelixPassive.
 impl ModAction for CounterHelixActive {
     fn clone_box(&self) -> Box<dyn ModAction> { Box::new(self.clone()) }
     fn action_name(&self) -> &str { "skill" }
-    fn duration(&self) -> usize { 40 }
-    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 150 }
+    fn duration(&self) -> usize { 0 }
+    fn cooltime(&self, _stat: &EntityStat, _level: usize) -> usize { 0 }
     fn casting_target(&self) -> CastingTarget { CastingTarget::Enemy }
 
-    fn effect(&self) -> Option<ModEffect> {
-        Some(ModEffect {
-            range: 30_000,
-            growth_range: 0,
-            start_timing: 8,
-            casting: CastingType::None,
-            target: CastingTarget::Enemy,
-            attack_type: AttackType::Skill,
-            effect_type: Box::new(CounterHelixEffect),
-        })
-    }
-}
-
-#[derive(Debug)]
-struct CounterHelixEffect;
-
-impl ModEffectType for CounterHelixEffect {
-    fn on_caster(&self) -> bool { true }
-    fn auto_target(&self) -> bool { true }
-
-    fn apply(&self, ctx: &mut GameCtx, _rng: u64, caster_id: usize, _input: InputTarget) {
-        spin_attack(ctx, caster_id);
-    }
-
-    fn expected_damage(&self, stat: &EntityStat) -> (usize, usize) {
-        (stat.attack * 70 / 100, 0)
-    }
+    fn effect(&self) -> Option<ModEffect> { None }
 }
 
 #[derive(Clone, Debug)]
@@ -255,10 +232,12 @@ fn spin_attack(ctx: &mut GameCtx, caster_id: usize) {
         .map(|e| e.stat().attack * 70 / 100)
         .unwrap_or(0);
 
+    // Hit all nearby enemies (champions + creeps/minions); skip towers to avoid
+    // their missing death animation.
     let mut targets: Vec<usize> = Vec::new();
     for i in 0..ctx.entity_count() {
         if let Some(e) = ctx.entity_at(i) {
-            if e.team() != team && e.id() != caster_id && e.is_champion() {
+            if e.team() != team && e.id() != caster_id && !e.is_tower() {
                 let p = e.pos();
                 let dx = p.x as i64 - cx as i64;
                 let dy = p.y as i64 - cy as i64;
