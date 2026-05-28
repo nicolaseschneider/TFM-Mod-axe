@@ -10,5 +10,9 @@
   "asset/base/setting/champion_info": {
     "remapping": "asset/axe_dota/setting/champion_info",
     "type": "override"
+  },
+  "asset/base/setting/patch_setting": {
+    "remapping": "asset/axe_dota/setting/patch_setting",
+    "type": "override"
   }
 }
