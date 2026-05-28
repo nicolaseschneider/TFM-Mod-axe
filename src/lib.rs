@@ -187,7 +187,9 @@ impl ModEffectType for BerserkerCallEffect {
         }
 
         // Dota flavor: Axe gains heavy bonus armor for the taunt's duration.
+        // Naming the buff gives a visible "currently taunting" status on Axe.
         ctx.add_buff(caster_id, BuffState {
+            name: "Berserker's Call".parse().unwrap(),
             duration: BuffType::Time { tick: CALL_TAUNT_TICKS },
             defence: 400,
             ..Default::default()
